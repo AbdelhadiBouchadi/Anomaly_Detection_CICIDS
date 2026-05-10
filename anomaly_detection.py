@@ -162,28 +162,32 @@ class CICIDSPreprocessor:
         return df[self.LABEL_COL].str.strip().value_counts()
 
 
+
 # ═════════════════════════════════════════════════════════════════════════════
 # 2. SUPERVISED MODELS
 # ═════════════════════════════════════════════════════════════════════════════
 
 class SupervisedDetector:
-    """Random Forest + XGBoost for labeled anomaly detection."""
+    """Random Forest + XGBoost with strict Regularization to prevent overfitting."""
 
     def __init__(self):
         self.rf = RandomForestClassifier(
-            n_estimators=200,
-            max_depth=20,
-            min_samples_split=5,
+            n_estimators=100,          # Reduced from 200 (Less complex)
+            max_depth=5,               # STRICT PRUNING: Reduced from 20
+            min_samples_split=20,      # NEW: Forces the tree to generalize
+            min_samples_leaf=10,       # NEW: Prevents memorizing tiny data points
             class_weight='balanced',
             n_jobs=-1,
             random_state=42
         )
         self.xgb = xgb.XGBClassifier(
-            n_estimators=300,
-            max_depth=8,
-            learning_rate=0.05,
+            n_estimators=100,          # Reduced from 300
+            max_depth=3,               # STRICT PRUNING: Reduced from 8
+            learning_rate=0.1,         # Slightly faster learning for smaller trees
             subsample=0.8,
             colsample_bytree=0.8,
+            reg_lambda=1.0,            # NEW: L2 Regularization (Penalizes complexity)
+            reg_alpha=0.5,             # NEW: L1 Regularization 
             scale_pos_weight=1,
             use_label_encoder=False,
             eval_metric='logloss',
